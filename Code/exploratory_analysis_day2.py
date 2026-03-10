@@ -38,3 +38,125 @@ plt.ylabel("Active Reported Daily Cases") #adding a label to the y-axis
 plt.show() #showing the plot
 
 # The estimated R0 value is 1.24.
+
+#%% --------------------------------------------------
+# Extract data for SEIR model
+
+timepoints = data['day'].values
+observed_I = data['active reported daily cases'].values
+
+# Initial conditions
+N = 100000
+
+I0 = observed_I[0]
+E0 = I0
+R0 = 0
+S0 = N - I0 - E0 - R0
+
+#%% --------------------------------------------------
+# SEIR Euler Method
+
+def SEIR_Euler(beta, sigma, gamma, S0, E0, I0, R0, timepoints, N):
+
+    S = [S0]
+    E = [E0]
+    I = [I0]
+    R = [R0]
+
+    for t in range(len(timepoints) - 1):
+
+        dt = timepoints[t+1] - timepoints[t]
+
+        S_current = S[-1]
+        E_current = E[-1]
+        I_current = I[-1]
+        R_current = R[-1]
+
+        dS = -beta * S_current * I_current / N
+        dE = beta * S_current * I_current / N - sigma * E_current
+        dI = sigma * E_current - gamma * I_current
+        dR = gamma * I_current
+
+        S.append(S_current + dt * dS)
+        E.append(E_current + dt * dE)
+        I.append(I_current + dt * dI)
+        R.append(R_current + dt * dR)
+
+    return np.array(S), np.array(E), np.array(I), np.array(R)
+
+#%% --------------------------------------------------
+# Grid Search for Best Parameters
+
+beta_range = np.linspace(0.1, 1.0, 15)
+sigma_range = np.linspace(0.1, 1.0, 15)
+gamma_range = np.linspace(0.1, 1.0, 15)
+
+best_SSE = float("inf")
+
+best_beta = None
+best_sigma = None
+best_gamma = None
+
+for b in beta_range:
+    for s in sigma_range:
+        for g in gamma_range:
+
+            S, E, I, R = SEIR_Euler(
+                b, s, g,
+                S0, E0, I0, R0,
+                timepoints,
+                N
+            )
+
+            SSE = np.sum((I - observed_I) ** 2)
+
+            if SSE < best_SSE:
+                best_SSE = SSE
+                best_beta = b
+                best_sigma = s
+                best_gamma = g
+
+# Print best parameters
+print("Best beta:", best_beta)
+print("Best sigma:", best_sigma)
+print("Best gamma:", best_gamma)
+print("Best SSE:", best_SSE)
+
+#%% --------------------------------------------------
+# Run model with best parameters
+
+S, E, I, R = SEIR_Euler(
+    best_beta,
+    best_sigma,
+    best_gamma,
+    S0, E0, I0, R0,
+    timepoints,
+    N
+)
+
+# Plot SEIR model vs data
+
+plt.figure()
+
+plt.scatter(
+    timepoints,
+    observed_I,
+    label="Observed Data"
+)
+
+plt.plot(
+    timepoints,
+    I,
+    color="red",
+    label="SEIR Model Fit"
+)
+
+plt.xlabel("Day")
+plt.ylabel("Active Cases")
+plt.title("SEIR Model Fit to Data")
+plt.legend()
+
+plt.show()
+
+
+# %%
