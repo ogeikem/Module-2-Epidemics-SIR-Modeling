@@ -5,7 +5,7 @@ import numpy as np
 from scipy.optimize import curve_fit
 #%%
 # Load the data
-data = pd.read_csv(r'C:\Users\ogeik\OneDrive\Desktop\BME 2315\Module-2-Epidemics-SIR-Modeling\Data\mystery_virus_daily_active_counts_RELEASE#1.csv', parse_dates=['date'], header=0, index_col=None)
+data = pd.read_csv(r'C:\Users\ogeik\OneDrive\Desktop\BME 2315\Module-2-Epidemics-SIR-Modeling\Data\mystery_virus_daily_active_counts_RELEASE#2.csv', parse_dates=['date'], header=0, index_col=None)
 #%%
 # We have day number, date, and active cases. We can use the day number and active cases to fit an exponential growth curve to estimate R0.
 # Let's define the exponential growth function
@@ -46,7 +46,7 @@ timepoints = data['day'].values
 observed_I = data['active reported daily cases'].values
 
 # Initial conditions
-N = 100000
+N = 17000
 
 I0 = observed_I[0]
 E0 = I0
@@ -56,16 +56,16 @@ S0 = N - I0 - E0 - R0
 #%% --------------------------------------------------
 # SEIR Euler Method
 
-def SEIR_Euler(beta, sigma, gamma, S0, E0, I0, R0, timepoints, N):
+def SEIR_Euler(beta, sigma, gamma, S0, E0, I0, R0, t_array, N):
 
     S = [S0]
     E = [E0]
     I = [I0]
     R = [R0]
 
-    for t in range(len(timepoints) - 1):
+    for t in range(len(t_array) - 1):
 
-        dt = timepoints[t+1] - timepoints[t]
+        dt = t_array[t+1] - t_array[t]
 
         S_current = S[-1]
         E_current = E[-1]
@@ -73,8 +73,8 @@ def SEIR_Euler(beta, sigma, gamma, S0, E0, I0, R0, timepoints, N):
         R_current = R[-1]
 
         dS = -beta * S_current * I_current / N
-        dE = beta * S_current * I_current / N - sigma * E_current
-        dI = sigma * E_current - gamma * I_current
+        dE =  (beta * S_current * I_current / N)- (sigma * E_current)
+        dI = (sigma * E_current) - (gamma * I_current)
         dR = gamma * I_current
 
         S.append(S_current + dt * dS)
@@ -117,44 +117,52 @@ for b in beta_range:
                 best_gamma = g
 
 # Print best parameters
-print("Best beta:", best_beta)
-print("Best sigma:", best_sigma)
-print("Best gamma:", best_gamma)
-print("Best SSE:", best_SSE)
-
+# print("Best beta:", best_beta)
+# print("Best sigma:", best_sigma)
+# print("Best gamma:", best_gamma)
+# print("Best SSE:", best_SSE)
+print(f"Optimization Results:\nBeta: {best_beta}\nSigma: {best_sigma}\nGamma: {best_gamma}\nSSE: {best_SSE:.2f}")
 #%% --------------------------------------------------
 # Run model with best parameters
+
+projection_days = np.arange(0,150,1)
 
 S, E, I, R = SEIR_Euler(
     best_beta,
     best_sigma,
     best_gamma,
     S0, E0, I0, R0,
-    timepoints,
+    projection_days,
     N
 )
+# Identifying the peak
+peak_val = np.max(I)
+peak_day = projection_days[np.argmax(I)]
 
 # Plot SEIR model vs data
 
 plt.figure()
 
 plt.scatter(
-    timepoints,
-    observed_I,
+    data['day'],
+    observed_I, color = 'red',
     label="Observed Data"
 )
 
-plt.plot(
-    timepoints,
-    I,
-    color="red",
-    label="SEIR Model Fit"
-)
+plt.plot(projection_days, I, color='blue', label='Infected (Projected)', linewidth=2)
 
+
+plt.axvline(peak_day, color='blue', linestyle=':', alpha=0.7)
+
+
+plt.title("Full SEIR Outbreak Projection")
 plt.xlabel("Day")
 plt.ylabel("Active Cases")
-plt.title("SEIR Model Fit to Data")
 plt.legend()
-
+plt.grid(alpha=0.3)
 plt.show()
 
+# maskin reduces beta by 40%
+# vaccine interventions removes people from susceptible to recovered wit campain
+# rollout vaccination removes people from suscpetible to recovered in batces
+# testin and quarantine reduces infectious period
