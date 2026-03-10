@@ -162,7 +162,7 @@ plt.legend()
 plt.grid(alpha=0.3)
 plt.show()
 
-# maskin reduces beta by 40%
-# vaccine interventions removes people from susceptible to recovered wit campain
-# rollout vaccination removes people from suscpetible to recovered in batces
-# testin and quarantine reduces infectious period
+# masking reduces beta by 40%
+# vaccine interventions removes people from susceptible to recovered with campaign
+# rollout vaccination removes people from suscpetible to recovered in batches
+# testing and quarantine reduces infectious period
