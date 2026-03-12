@@ -87,9 +87,9 @@ def SEIR_Euler(beta, sigma, gamma, S0, E0, I0, R0, t_array, N):
 #%% --------------------------------------------------
 # Grid Search for Best Parameters
 
-beta_range = np.linspace(0.1, 1.0, 15)
-sigma_range = np.linspace(0.1, 1.0, 15)
-gamma_range = np.linspace(0.1, 1.0, 15)
+beta_range = np.linspace(1/18, 1/12, 5)
+sigma_range = np.linspace(0.4, 0.8, 10)
+gamma_range = np.linspace(0.05, 0.25, 5)
 
 best_SSE = float("inf")
 
